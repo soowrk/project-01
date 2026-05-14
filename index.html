@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AIPub — AI Workload Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Geist+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    /* ─────────────────────────────────────────
+       CSS Custom Properties — AIPub Design Tokens
+    ───────────────────────────────────────── */
+    :root {
+      /* Base */
+      --primary: #2C78FF;
+      --primary-foreground: #FAFAFA;
+      --primary-operator: #EF0000;
+      --background: #FFFFFF;
+      --foreground: #0A0A0A;
+      --muted: #F5F5F5;
+      --muted-foreground: #737373;
+      --border: #E5E5E5;
+      --input: #E5E5E5;
+      --ring: #A3A3A3;
+      --card: #FFFFFF;
+      --card-foreground: #0A0A0A;
+      --secondary: #F5F5F5;
+      --secondary-foreground: #262626;
+      --destructive: #DC2626;
+      --destructive-foreground: #FEF2F2;
+      --radius: 8px;
+
+      /* Semantic accent — red */
+      --color-accent-red-subtle: #FEE2E2;
+      --color-accent-red-foreground: #DC2626;
+      --color-accent-red-bold: #DC2626;
+      --color-accent-red-bold-foreground: #FFFFFF;
+      --color-accent-red-border: #FECACA;
+
+      /* Semantic accent — orange */
+      --color-accent-orange-subtle: #FFEDD5;
+      --color-accent-orange-foreground: #EA580C;
+      --color-accent-orange-bold: #F97316;
+      --color-accent-orange-bold-foreground: #FFFFFF;
+      --color-accent-orange-border: #FED7AA;
+
+      /* Semantic accent — yellow */
+      --color-accent-yellow-subtle: #FEF3C7;
+      --color-accent-yellow-foreground: #D97706;
+      --color-accent-yellow-bold: #FCD34D;
+      --color-accent-yellow-bold-foreground: #78350F;
+      --color-accent-yellow-border: #FDE68A;
+
+      /* Semantic accent — green */
+      --color-accent-green-subtle: #ECFDF5;
+      --color-accent-green-foreground: #047857;
+      --color-accent-green-bold: #16A34A;
+      --color-accent-green-bold-foreground: #FFFFFF;
+      --color-accent-green-border: #A7F3D0;
+
+      /* Semantic accent — blue */
+      --color-accent-blue-subtle: #E8F8FF;
+      --color-accent-blue-foreground: #2C78FF;
+      --color-accent-blue-bold: #2C78FF;
+      --color-accent-blue-bold-foreground: #FFFFFF;
+      --color-accent-blue-border: #BFDBFE;
+
+      /* Semantic accent — purple */
+      --color-accent-purple-subtle: #EDE9FE;
+      --color-accent-purple-foreground: #7C3AED;
+      --color-accent-purple-bold: #7C3AED;
+      --color-accent-purple-bold-foreground: #FFFFFF;
+      --color-accent-purple-border: #DDD6FE;
+
+      /* Semantic accent — gray */
+      --color-accent-gray-subtle: #F5F5F5;
+      --color-accent-gray-foreground: #525252;
+      --color-accent-gray-bold: #737373;
+      --color-accent-gray-bold-foreground: #FFFFFF;
+      --color-accent-gray-border: #D4D4D4;
+
+      /* Motion */
+      --motion-fast: 120ms;
+      --motion-normal: 180ms;
+      --motion-slow: 300ms;
+      --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+      --easing-enter: cubic-bezier(0, 0, 0.2, 1);
+      --easing-exit: cubic-bezier(0.4, 0, 1, 1);
+
+      /* Spacing */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 12px;
+      --space-lg: 16px;
+      --space-xl: 24px;
+      --space-2xl: 32px;
+
+      /* Radius */
+      --rounded-xs: 2px;
+      --rounded-sm: 6px;
+      --rounded-md: 8px;
+      --rounded-lg: 10px;
+      --rounded-xl: 14px;
+      --rounded-pill: 9999px;
+    }
+
+    /* ─────────────────────────────────────────
+       Reset & Base
+    ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+      background: var(--background);
+      color: var(--foreground);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    code, pre, .mono {
+      font-family: 'Geist Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    button { cursor: pointer; border: none; background: none; font: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ─────────────────────────────────────────
+       Layout — Sidebar + Content
+    ───────────────────────────────────────── */
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      background: var(--background);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo-mark {
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      border-radius: var(--rounded-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-foreground);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: -0.5px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo-text {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .sidebar-nav {
+      padding: 8px;
+      flex: 1;
+    }
+
+    .sidebar-section {
+      margin-bottom: 16px;
+    }
+
+    .sidebar-section-label {
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 16px;
+      color: var(--muted-foreground);
+      padding: 4px 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: var(--rounded-sm);
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 20px;
+      color: var(--muted-foreground);
+      transition: background var(--motion-fast) var(--easing-default),
+                  color var(--motion-fast) var(--easing-default);
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      background: var(--muted);
+      color: var(--foreground);
+    }
+
+    .nav-item.active {
+      background: var(--color-accent-blue-subtle);
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .nav-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+
+    .nav-item.active .nav-icon { opacity: 1; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--color-accent-red-bold);
+      color: var(--color-accent-red-bold-foreground);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: var(--rounded-pill);
+      min-width: 18px;
+      text-align: center;
+      line-height: 14px;
+    }
+
+    /* Main content */
+    .main {
+      margin-left: 220px;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Topbar */
+    .topbar {
+      height: 52px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: var(--background);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted-foreground);
+    }
+
+    .topbar-breadcrumb span { color: var(--foreground); font-weight: 500; }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ─────────────────────────────────────────
+       Page Content
+    ───────────────────────────────────────── */
+    .page-content {
+      padding: 24px;
+      flex: 1;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 32px;
+    }
+
+    .page-subtitle {
+      font-size: 13px;
+      color: var(--muted-foreground);
+      margin-top: 2px;
+    }
+
+    /* ─────────────────────────────────────────
+       Buttons
+    ───────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      height: 36px;
+      border-radius: var(--rounded-md);
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 20px;
+      transition: opacity var(--motion-fast) var(--easing-default),
+                  transform var(--motion-fast) var(--easing-default);
+      cursor: pointer;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.92; }
+    .btn:active { transform: scale(0.98); }
+    .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+      border-color: var(--border);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--foreground);
+      border-color: var(--border);
+    }
+
+    .btn-destructive {
+      background: var(--destructive);
+      color: var(--destructive-foreground);
+    }
+
+    .btn-sm {
+      height: 28px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    /* ─────────────────────────────────────────
+       Status Badge
+    ───────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: var(--rounded-xs);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 16px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-right: 5px;
+      flex-shrink: 0;
+    }
+
+    /* Hue variants — subtle */
+    .badge-green  { background: var(--color-accent-green-subtle);  color: var(--color-accent-green-foreground);  border-color: var(--color-accent-green-border);  }
+    .badge-yellow { background: var(--color-accent-yellow-subtle); color: var(--color-accent-yellow-foreground); border-color: var(--color-accent-yellow-border); }
+    .badge-red    { background: var(--color-accent-red-subtle);    color: var(--color-accent-red-foreground);    border-color: var(--color-accent-red-border);    }
+    .badge-orange { background: var(--color-accent-orange-subtle); color: var(--color-accent-orange-foreground); border-color: var(--color-accent-orange-border); }
+    .badge-blue   { background: var(--color-accent-blue-subtle);   color: var(--color-accent-blue-foreground);   border-color: var(--color-accent-blue-border);   }
+    .badge-purple { background: var(--color-accent-purple-subtle); color: var(--color-accent-purple-foreground); border-color: var(--color-accent-purple-border); }
+    .badge-gray   { background: var(--color-accent-gray-subtle);   color: var(--color-accent-gray-foreground);   border-color: var(--color-accent-gray-border);   }
+
+    /* Bold variants */
+    .badge-green-bold  { background: var(--color-accent-green-bold);  color: var(--color-accent-green-bold-foreground);  border-color: var(--color-accent-green-bold);  }
+    .badge-red-bold    { background: var(--color-accent-red-bold);    color: var(--color-accent-red-bold-foreground);    border-color: var(--color-accent-red-bold);    }
+    .badge-orange-bold { background: var(--color-accent-orange-bold); color: var(--color-accent-orange-bold-foreground); border-color: var(--color-accent-orange-bold); }
+    .badge-blue-bold   { background: var(--color-accent-blue-bold);   color: var(--color-accent-blue-bold-foreground);   border-color: var(--color-accent-blue-bold);   }
+
+    /* ─────────────────────────────────────────
+       Chip / MultiSelect
+    ───────────────────────────────────────── */
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: var(--rounded-sm);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 16px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--foreground);
+      cursor: pointer;
+      transition: background var(--motion-fast) var(--easing-default),
+                  color var(--motion-fast) var(--easing-default),
+                  border-color var(--motion-fast) var(--easing-default);
+      user-select: none;
+    }
+
+    .chip:hover { background: var(--muted); }
+    .chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    .chip.selected {
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border-color: var(--primary);
+    }
+
+    .chip.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ─────────────────────────────────────────
+       Input / Select
+    ───────────────────────────────────────── */
+    .input {
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--input);
+      border-radius: var(--rounded-md);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--foreground);
+      background: var(--background);
+      outline: none;
+      transition: border-color var(--motion-fast) var(--easing-default);
+      width: 100%;
+    }
+
+    .input:focus-visible {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+    }
+
+    .input::placeholder { color: var(--muted-foreground); }
+
+    .search-wrapper {
+      position: relative;
+      width: 240px;
+    }
+
+    .search-wrapper svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted-foreground);
+      pointer-events: none;
+    }
+
+    .search-wrapper .input { padding-left: 32px; }
+
+    /* ─────────────────────────────────────────
+       Table
+    ───────────────────────────────────────── */
+    .table-wrapper {
+      border: 1px solid var(--border);
+      border-radius: var(--rounded-lg);
+      overflow: hidden;
+      background: var(--card);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead { border-bottom: 1px solid var(--border); }
+
+    thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 16px;
+      color: var(--muted-foreground);
+      white-space: nowrap;
+      background: var(--background);
+    }
+
+    thead th:first-child { padding-left: 16px; }
+    thead th:last-child  { padding-right: 16px; }
+
+    tbody tr {
+      height: 52px;
+      border-bottom: 1px solid var(--border);
+      transition: background var(--motion-fast) var(--easing-default);
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: color-mix(in srgb, var(--muted) 50%, transparent); }
+
+    td {
+      padding: 0 12px;
+      vertical-align: middle;
+      color: var(--foreground);
+      line-height: 20px;
+    }
+
+    td:first-child { padding-left: 16px; }
+    td:last-child  { padding-right: 16px; }
+
+    .td-mono {
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      color: var(--muted-foreground);
+    }
+
+    .td-meta {
+      font-size: 12px;
+      color: var(--muted-foreground);
+    }
+
+    .td-status { width: 180px; }
+    .td-action { width: 40px; text-align: right; }
+
+    .job-name {
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .job-meta {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      margin-top: 1px;
+      font-family: 'Geist Mono', monospace;
+    }
+
+    /* ─────────────────────────────────────────
+       ChainJob Progress Cell
+    ───────────────────────────────────────── */
+    .chain-progress {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 0;
+    }
+
+    .chain-step-chip {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-accent-green-foreground);
+      background: var(--color-accent-green-subtle);
+      border: 1px solid var(--color-accent-green-border);
+      border-radius: var(--rounded-xs);
+      padding: 1px 6px;
+      width: fit-content;
+    }
+
+    .chain-step-chip.failed {
+      color: var(--color-accent-red-foreground);
+      background: var(--color-accent-red-subtle);
+      border-color: var(--color-accent-red-border);
+    }
+
+    .chain-bar {
+      display: flex;
+      gap: 2px;
+      height: 4px;
+    }
+
+    .chain-segment {
+      flex: 1;
+      border-radius: 1px;
+    }
+
+    .chain-count {
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 16px;
+    }
+
+    .chain-count.green  { color: var(--color-accent-green-foreground); }
+    .chain-count.yellow { color: var(--color-accent-yellow-foreground); }
+    .chain-count.red    { color: var(--color-accent-red-foreground); }
+    .chain-count.blue   { color: var(--color-accent-blue-foreground); }
+    .chain-count.gray   { color: var(--color-accent-gray-foreground); }
+
+    /* ─────────────────────────────────────────
+       GPU Utilization Bar (inline)
+    ───────────────────────────────────────── */
+    .util-bar-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .util-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--color-accent-gray-subtle);
+      border-radius: var(--rounded-pill);
+      overflow: hidden;
+    }
+
+    .util-bar-fill {
+      height: 100%;
+      border-radius: var(--rounded-pill);
+      transition: width var(--motion-normal) var(--easing-default);
+    }
+
+    .util-value {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: var(--muted-foreground);
+      min-width: 32px;
+      text-align: right;
+    }
+
+    /* ─────────────────────────────────────────
+       Summary Cards (Dashboard Overview)
+    ───────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      border: 1px solid var(--border);
+      border-radius: var(--rounded-lg);
+      padding: 14px 16px;
+      background: var(--card);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      line-height: 16px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 36px;
+      margin-top: 4px;
+      letter-spacing: -1px;
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stat-delta-pos { color: var(--color-accent-green-foreground); font-weight: 500; }
+    .stat-delta-neg { color: var(--color-accent-red-foreground); font-weight: 500; }
+
+    /* ─────────────────────────────────────────
+       Filter Bar
+    ───────────────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .filter-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      flex-shrink: 0;
+    }
+
+    /* ─────────────────────────────────────────
+       Dropdown Menu (simple)
+    ───────────────────────────────────────── */
+    .action-menu {
+      position: relative;
+      display: inline-block;
+    }
+
+    .action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--rounded-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted-foreground);
+      transition: background var(--motion-fast) var(--easing-default),
+                  color var(--motion-fast) var(--easing-default);
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+
+    .action-btn:hover {
+      background: var(--muted);
+      color: var(--foreground);
+    }
+
+    /* ─────────────────────────────────────────
+       Section header
+    ───────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+    }
+
+    /* ─────────────────────────────────────────
+       Tab Bar
+    ───────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--muted-foreground);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: color var(--motion-fast) var(--easing-default),
+                  border-color var(--motion-fast) var(--easing-default);
+      margin-bottom: -1px;
+    }
+
+    .tab:hover { color: var(--foreground); }
+
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 500;
+    }
+
+    .tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 16px;
+      padding: 0 4px;
+      background: var(--muted);
+      border-radius: var(--rounded-pill);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted-foreground);
+      margin-left: 6px;
+    }
+
+    .tab.active .tab-count {
+      background: var(--color-accent-blue-subtle);
+      color: var(--primary);
+    }
+
+    /* ─────────────────────────────────────────
+       Empty State
+    ───────────────────────────────────────── */
+    .empty-state {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--muted-foreground);
+    }
+
+    .empty-state-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--foreground);
+      margin-bottom: 4px;
+    }
+
+    .empty-state-desc {
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    /* ─────────────────────────────────────────
+       Skeleton
+    ───────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--muted) 25%,
+        color-mix(in srgb, var(--muted) 70%, var(--border)) 50%,
+        var(--muted) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--rounded-xs);
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ─────────────────────────────────────────
+       Separator
+    ───────────────────────────────────────── */
+    .sep {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    /* ─────────────────────────────────────────
+       Tooltip (CSS-only)
+    ───────────────────────────────────────── */
+    [data-tooltip] {
+      position: relative;
+    }
+
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--foreground);
+      color: var(--background);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: var(--rounded-sm);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--motion-fast) var(--easing-default);
+    }
+
+    [data-tooltip]:hover::after { opacity: 1; }
+
+    /* ─────────────────────────────────────────
+       Scrollbar
+    ───────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--ring); }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">AI</div>
+      <span class="sidebar-logo-text">AIPub</span>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Workloads</div>
+        <div class="nav-item active" role="button" tabindex="0">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1.5"/><line x1="2" y1="6" x2="14" y2="6"/></svg>
+          Jobs
+          <span class="nav-badge">3</span>
+        </div>
+        <div class="nav-item" role="button" tabindex="0">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+          Workspaces
+        </div>
+        <div class="nav-item" role="button" tabindex="0">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><polyline points="8,4 8,8 10.5,10"/></svg>
+          CronJobs
+        </div>
+        <div class="nav-item" role="button" tabindex="0">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,8 5,5 8,8 11,5 14,8"/></svg>
+          ChainJobs
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Cluster</div>
+        <div class="nav-item" role="button" tabindex="0">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="8" rx="1.5"/><line x1="4" y1="4" x2="4" y2="12"/></svg>
+          Nodes
+        </div>
+        <div class="nav-item" role="button" tabindex="0">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12 L8 4 L14 12 Z"/></svg>
+          ResourceSets
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">System</div>
+        <div class="nav-item" role="button" tabindex="0">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4"/></svg>
+          Settings
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        Workloads
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,2 8,6 4,10"/></svg>
+        <span>Jobs</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline btn-sm">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 1v10M1 6h10"/></svg>
+          New Job
+        </button>
+        <button class="action-btn" aria-label="Refresh" data-tooltip="Refresh">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7A5.5 5.5 0 0 1 12 4.5M12.5 7A5.5 5.5 0 0 1 2 9.5"/><polyline points="10,2 12,4.5 9.5,5"/><polyline points="4,11.5 2,9.5 4.5,9"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page-content">
+
+      <!-- Stats -->
+      <div class="stats-grid" role="region" aria-label="Job statistics">
+        <div class="stat-card">
+          <div class="stat-label">Total Jobs</div>
+          <div class="stat-value">147</div>
+          <div class="stat-sub">
+            <span class="stat-delta-pos">↑ 12</span> from yesterday
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Running</div>
+          <div class="stat-value" style="color: var(--color-accent-green-foreground);">24</div>
+          <div class="stat-sub">8 GPUs active</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Queued</div>
+          <div class="stat-value" style="color: var(--color-accent-orange-foreground);">7</div>
+          <div class="stat-sub">Avg wait 4m 12s</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Failed (24h)</div>
+          <div class="stat-value" style="color: var(--color-accent-red-foreground);">3</div>
+          <div class="stat-sub">
+            <span class="stat-delta-neg">↑ 2</span> from yesterday
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar" role="tablist" aria-label="Job filters">
+        <div class="tab active" role="tab" aria-selected="true" tabindex="0">
+          All <span class="tab-count">147</span>
+        </div>
+        <div class="tab" role="tab" aria-selected="false" tabindex="0">
+          Running <span class="tab-count">24</span>
+        </div>
+        <div class="tab" role="tab" aria-selected="false" tabindex="0">
+          Queued <span class="tab-count">7</span>
+        </div>
+        <div class="tab" role="tab" aria-selected="false" tabindex="0">
+          Failed <span class="tab-count">3</span>
+        </div>
+        <div class="tab" role="tab" aria-selected="false" tabindex="0">
+          Succeeded
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-wrapper">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4.5"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
+          <input class="input" type="search" placeholder="Search jobs…" aria-label="Search jobs" />
+        </div>
+
+        <span class="filter-label">Status:</span>
+        <div class="chip-group" role="group" aria-label="Status filter">
+          <button class="chip selected" aria-pressed="true">All</button>
+          <button class="chip" aria-pressed="false">Running</button>
+          <button class="chip" aria-pressed="false">Pending</button>
+          <button class="chip" aria-pressed="false">Queued</button>
+          <button class="chip" aria-pressed="false">Failed</button>
+        </div>
+
+        <button class="btn btn-outline btn-sm" style="margin-left: auto;">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="3" x2="11" y2="3"/><line x1="3" y1="6" x2="9" y2="6"/><line x1="5" y1="9" x2="7" y2="9"/></svg>
+          Filters
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrapper">
+        <table aria-label="Job list">
+          <thead>
+            <tr>
+              <th style="width:240px">Job Name</th>
+              <th style="width:90px">Type</th>
+              <th class="td-status" scope="col">Status / Progress</th>
+              <th style="width:160px">GPU Util.</th>
+              <th style="width:90px">GPUs</th>
+              <th style="width:120px">Duration</th>
+              <th style="width:130px">Submitted</th>
+              <th class="td-action"></th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- Row 1 — Running -->
+            <tr>
+              <td>
+                <div class="job-name">train-llm-v2</div>
+                <div class="job-meta">job-8f3a21c</div>
+              </td>
+              <td><span class="badge badge-gray">Job</span></td>
+              <td class="td-status">
+                <span class="badge badge-green">
+                  <span class="badge-dot" style="background:var(--color-accent-green-bold)"></span>
+                  Running
+                </span>
+              </td>
+              <td>
+                <div class="util-bar-wrapper">
+                  <div class="util-bar">
+                    <div class="util-bar-fill" style="width:87%;background:var(--color-accent-blue-bold)"></div>
+                  </div>
+                  <span class="util-value">87%</span>
+                </div>
+              </td>
+              <td class="td-mono">8× A100</td>
+              <td class="td-mono">6h 42m</td>
+              <td class="td-meta">2026-05-14 09:12</td>
+              <td class="td-action">
+                <button class="action-btn" aria-label="Job actions">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Row 2 — Running (high util warning) -->
+            <tr>
+              <td>
+                <div class="job-name">finetune-bert-squad</div>
+                <div class="job-meta">job-a19dd04</div>
+              </td>
+              <td><span class="badge badge-gray">Job</span></td>
+              <td class="td-status">
+                <span class="badge badge-green">
+                  <span class="badge-dot" style="background:var(--color-accent-green-bold)"></span>
+                  Running
+                </span>
+              </td>
+              <td>
+                <div class="util-bar-wrapper">
+                  <div class="util-bar">
+                    <div class="util-bar-fill" style="width:100%;background:var(--color-accent-green-bold)"></div>
+                  </div>
+                  <span class="util-value">100%</span>
+                </div>
+              </td>
+              <td class="td-mono">4× H100</td>
+              <td class="td-mono">1h 08m</td>
+              <td class="td-meta">2026-05-14 14:05</td>
+              <td class="td-action">
+                <button class="action-btn" aria-label="Job actions">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Row 3 — ChainJob Running -->
+            <tr>
+              <td>
+                <div class="job-name">data-preprocess-pipeline</div>
+                <div class="job-meta">job-c44b82e</div>
+              </td>
+              <td><span class="badge badge-purple">ChainJob</span></td>
+              <td class="td-status">
+                <div class="chain-progress" role="status" aria-label="Step 3 of 5, Running">
+                  <span class="chain-step-chip">step-3 · tokenize</span>
+                  <div class="chain-bar" aria-hidden="true">
+                    <div class="chain-segment" style="background:var(--color-accent-blue-bold)"></div>
+                    <div class="chain-segment" style="background:var(--color-accent-blue-bold)"></div>
+                    <div class="chain-segment" style="background:var(--color-accent-green-bold)"></div>
+                    <div class="chain-segment" style="background:var(--color-accent-gray-subtle);border:1px solid var(--border)"></div>
+                    <div class="chain-segment" style="background:var(--color-accent-gray-subtle);border:1px solid var(--border)"></div>
+                  </div>
+                  <span class="chain-count green">2 / 5 completed</span>
+                </div>
+              </td>
+              <td>
+                <div class="util-bar-wrapper">
+                  <div class="util-bar">
+                    <div class="util-bar-fill" style="width:52%;background:var(--color-accent-blue-bold)"></div>
+                  </div>
+                  <span class="util-value">52%</span>
+                </div>
+              </td>
+              <td class="td-mono">2× A100</td>
+              <td class="td-mono">22m 41s</td>
+              <td class="td-meta">2026-05-14 15:00</td>
+              <td class="td-action">
+                <button class="action-btn" aria-label="Job actions">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Row 4 — Queued -->
+            <tr>
+              <td>
+                <div class="job-name">eval-mistral-7b</div>
+                <div class="job-meta">job-f7c1003</div>
+              </td>
+              <td><span class="badge badge-gray">Job</span></td>
+              <td class="td-status">
+                <span class="badge badge-orange">
+                  <span class="badge-dot" style="background:var(--color-accent-orange-bold)"></span>
+                  Queued
+                </span>
+              </td>
+              <td>
+                <div class="util-bar-wrapper">
+                  <div class="util-bar">
+                    <div class="util-bar-fill" style="width:0%;background:var(--color-accent-blue-bold)"></div>
+                  </div>
+                  <span class="util-value">—</span>
+                </div>
+              </td>
+              <td class="td-mono">1× A100</td>
+              <td class="td-mono">—</td>
+              <td class="td-meta">2026-05-14 15:18</td>
+              <td class="td-action">
+                <button class="action-btn" aria-label="Job actions">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Row 5 — Pending -->
+            <tr>
+              <td>
+                <div class="job-name">weekly-retrain-v3</div>
+                <div class="job-meta">job-0b2fa91</div>
+              </td>
+              <td><span class="badge badge-purple">CronJob</span></td>
+              <td class="td-status">
+                <span class="badge badge-yellow">
+                  <span class="badge-dot" style="background:var(--color-accent-yellow-bold)"></span>
+                  Pending
+                </span>
+              </td>
+              <td>
+                <div class="util-bar-wrapper">
+                  <div class="util-bar"></div>
+                  <span class="util-value">—</span>
+                </div>
+              </td>
+              <td class="td-mono">16× H100</td>
+              <td class="td-mono">—</td>
+              <td class="td-meta">2026-05-14 15:30</td>
+              <td class="td-action">
+                <button class="action-btn" aria-label="Job actions">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Row 6 — Failed (ChainJob) -->
+            <tr>
+              <td>
+                <div class="job-name">ingest-s3-transform</div>
+                <div class="job-meta">job-9e0c44d</div>
+              </td>
+              <td><span class="badge badge-purple">ChainJob</span></td>
+              <td class="td-status">
+                <div class="chain-progress" role="status" aria-label="Failed at step 2 of 4">
+                  <span class="chain-step-chip failed">step-2 · transform</span>
+                  <div class="chain-bar" aria-hidden="true">
+                    <div class="chain-segment" style="background:var(--color-accent-blue-bold)"></div>
+                    <div class="chain-segment" style="background:var(--color-accent-red-bold)"></div>
+                    <div class="chain-segment" style="background:var(--color-accent-gray-subtle);border:1px solid var(--border)"></div>
+                    <div class="chain-segment" style="background:var(--color-accent-gray-subtle);border:1px solid var(--border)"></div>
+                  </div>
+                  <span class="chain-count red">1 / 4 completed</span>
+                </div>
+              </td>
+              <td>
+                <div class="util-bar-wrapper">
+                  <div class="util-bar"></div>
+                  <span class="util-value">—</span>
+                </div>
+              </td>
+              <td class="td-mono">4× A100</td>
+              <td class="td-mono">38m 11s</td>
+              <td class="td-meta">2026-05-14 12:00</td>
+              <td class="td-action">
+                <button class="action-btn" aria-label="Job actions">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Row 7 — Succeeded -->
+            <tr>
+              <td>
+                <div class="job-name">benchmark-throughput</div>
+                <div class="job-meta">job-2c71b58</div>
+              </td>
+              <td><span class="badge badge-gray">Job</span></td>
+              <td class="td-status">
+                <span class="badge badge-blue">
+                  <span class="badge-dot" style="background:var(--color-accent-blue-bold)"></span>
+                  Succeeded
+                </span>
+              </td>
+              <td>
+                <div class="util-bar-wrapper">
+                  <div class="util-bar">
+                    <div class="util-bar-fill" style="width:76%;background:var(--color-accent-gray-bold)"></div>
+                  </div>
+                  <span class="util-value">76%</span>
+                </div>
+              </td>
+              <td class="td-mono">2× H100</td>
+              <td class="td-mono">14m 02s</td>
+              <td class="td-meta">2026-05-14 08:30</td>
+              <td class="td-action">
+                <button class="action-btn" aria-label="Job actions">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Row 8 — Stopped -->
+            <tr>
+              <td>
+                <div class="job-name">debug-oom-repro</div>
+                <div class="job-meta">job-e93c10b</div>
+              </td>
+              <td><span class="badge badge-gray">Job</span></td>
+              <td class="td-status">
+                <span class="badge badge-gray">
+                  <span class="badge-dot" style="background:var(--color-accent-gray-bold)"></span>
+                  Stopped
+                </span>
+              </td>
+              <td>
+                <div class="util-bar-wrapper">
+                  <div class="util-bar"></div>
+                  <span class="util-value">—</span>
+                </div>
+              </td>
+              <td class="td-mono">1× A100</td>
+              <td class="td-mono">3m 29s</td>
+              <td class="td-meta">2026-05-13 22:11</td>
+              <td class="td-action">
+                <button class="action-btn" aria-label="Job actions">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Row 9 — Skeleton (loading) -->
+            <tr aria-hidden="true">
+              <td><div class="skeleton" style="height:14px;width:140px;margin-bottom:4px"></div><div class="skeleton" style="height:11px;width:80px"></div></td>
+              <td><div class="skeleton" style="height:20px;width:40px;border-radius:2px"></div></td>
+              <td><div class="skeleton" style="height:20px;width:80px;border-radius:2px"></div></td>
+              <td><div class="skeleton" style="height:4px;width:100%"></div></td>
+              <td><div class="skeleton" style="height:14px;width:60px"></div></td>
+              <td><div class="skeleton" style="height:14px;width:60px"></div></td>
+              <td><div class="skeleton" style="height:14px;width:100px"></div></td>
+              <td></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12px;color:var(--muted-foreground)">
+        <span>Showing 1–9 of 147 jobs</span>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-outline btn-sm" disabled>← Prev</button>
+          <button class="btn btn-outline btn-sm" style="background:var(--primary);color:var(--primary-foreground);border-color:var(--primary)">1</button>
+          <button class="btn btn-outline btn-sm">2</button>
+          <button class="btn btn-outline btn-sm">3</button>
+          <span style="padding:0 4px;line-height:28px">…</span>
+          <button class="btn btn-outline btn-sm">17</button>
+          <button class="btn btn-outline btn-sm">Next →</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+    });
+    tab.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tab.click(); }
+    });
+  });
+
+  // Chip toggle
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const group = chip.closest('.chip-group');
+      group.querySelectorAll('.chip').forEach(c => {
+        c.classList.remove('selected');
+        c.setAttribute('aria-pressed', 'false');
+      });
+      chip.classList.add('selected');
+      chip.setAttribute('aria-pressed', 'true');
+    });
+  });
+
+  // Nav item activation
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      item.classList.add('active');
+    });
+    item.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
+    });
+  });
+</script>
+
+</body>
+</html>
