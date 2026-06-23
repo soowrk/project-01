@@ -1,5 +1,7 @@
 import os
+import asyncio
 import logging
+import traceback
 
 from google import genai
 
@@ -18,12 +20,22 @@ def _get_client():
     return client
 
 
-async def analyze_news(nps_news: list[dict], market_news: list[dict]) -> str | None:
+def _call_gemini(prompt: str) -> str | None:
     c = _get_client()
     if not c:
-        logger.warning("GEMINI_API_KEY가 설정되지 않아 뉴스 분석을 건너뜁니다.")
+        print("[AI분석] GEMINI_API_KEY가 설정되지 않음")
         return None
 
+    print("[AI분석] Gemini API 호출 중...")
+    response = c.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+    )
+    print(f"[AI분석] 응답 수신 완료 ({len(response.text)}자)")
+    return response.text
+
+
+async def analyze_news(nps_news: list[dict], market_news: list[dict]) -> str | None:
     nps_text = "\n".join(
         f"- {n['title']}: {n['desc']}" for n in nps_news if n.get("title")
     )
@@ -56,14 +68,12 @@ async def analyze_news(nps_news: list[dict], market_news: list[dict]) -> str | N
 ⚠️ 리스크 요인
 - 주의해야 할 리스크 1-2개
 
-짧고 핵심적으로 작성하세요. 이모지를 활용하세요."""
+짧고 핵심적으로 작성하세요. 이모지를 활용하세요. 마크다운 기호(*, _, `, [, ])는 사용하지 마세요."""
 
     try:
-        response = c.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        )
-        return response.text
+        result = await asyncio.to_thread(_call_gemini, prompt)
+        return result
     except Exception as e:
-        logger.error(f"뉴스 분석 실패: {e}")
+        print(f"[AI분석] 에러 발생: {e}")
+        traceback.print_exc()
         return None
