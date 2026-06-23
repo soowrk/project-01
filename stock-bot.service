@@ -1,0 +1,15 @@
+[Unit]
+Description=NPS Stock Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/project-01
+ExecStart=/usr/bin/python3 /home/ubuntu/project-01/bot.py
+Restart=always
+RestartSec=10
+EnvironmentFile=/home/ubuntu/project-01/.env
+
+[Install]
+WantedBy=multi-user.target
