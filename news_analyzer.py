@@ -77,3 +77,67 @@ async def analyze_news(nps_news: list[dict], market_news: list[dict]) -> str | N
         print(f"[AI분석] 에러 발생: {e}")
         traceback.print_exc()
         return None
+
+
+async def recommend_stocks(
+    nps_news: list[dict],
+    market_news: list[dict],
+    undervalued: list[dict],
+    portfolio_summary: str,
+) -> str | None:
+    nps_text = "\n".join(
+        f"- {n['title']}: {n['desc']}" for n in nps_news if n.get("title")
+    )
+    market_text = "\n".join(
+        f"- {n['title']}: {n['desc']}" for n in market_news if n.get("title")
+    )
+    stock_text = "\n".join(
+        f"- {s['name']}({s['ticker']}): 현재가 {s['price']:,}원, PER {s['per']}, PBR {s['pbr']}, 거래량변화 {s['volume_change']}, 특징: {s['reason']}"
+        for s in undervalued
+    ) if undervalued else "저평가 종목 데이터 없음"
+
+    prompt = f"""당신은 한국 주식시장 전문 애널리스트입니다.
+아래 정보를 종합 분석하여 오늘 주목할 종목을 추천해주세요.
+
+## 국민연금 포트폴리오 현황
+{portfolio_summary}
+
+## 국민연금 관련 뉴스
+{nps_text}
+
+## 주식 시장 뉴스
+{market_text}
+
+## 저평가 분석 종목 (국민연금 보유)
+{stock_text}
+
+다음 형식으로 추천해주세요:
+
+🎯 오늘의 추천 종목 (3~5개)
+
+각 종목마다:
+종목명
+- 추천 이유 (뉴스, 시장 트렌드, 밸류에이션을 종합)
+- 매수 관점: 단기/중기/장기 중 어떤 관점인지
+- 주의할 점
+
+💰 포트폴리오 전략
+- 현재 시장 상황에서의 투자 전략 제안 (공격적/보수적/균형)
+- 업종 비중 조절 제안
+
+조건:
+- 국민연금이 보유한 종목 위주로 추천
+- 아직 대중적 관심이 적지만 가치가 있는 종목을 우선
+- 뉴스에서 언급된 섹터와 연관된 종목 우선
+- 짧고 핵심적으로 작성
+- 마크다운 기호(*, _, `, [, ])는 사용하지 마세요
+- 이모지를 활용하세요"""
+
+    try:
+        print("[AI추천] Gemini API 호출 중...")
+        result = await asyncio.to_thread(_call_gemini, prompt)
+        return result
+    except Exception as e:
+        print(f"[AI추천] 에러 발생: {e}")
+        traceback.print_exc()
+        return None

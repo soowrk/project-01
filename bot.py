@@ -8,7 +8,7 @@ from telegram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from news_collector import collect_nps_news, collect_market_news
-from news_analyzer import analyze_news
+from news_analyzer import analyze_news, recommend_stocks
 from stock_analyzer import find_undervalued_stocks, get_nps_portfolio_summary
 
 load_dotenv()
@@ -28,6 +28,7 @@ async def build_daily_report() -> str:
     today = datetime.now().strftime("%Y-%m-%d")
     sections.append(f"📊 *국민연금 투자 데일리 리포트*\n📅 {today}\n")
 
+    portfolio = ""
     try:
         portfolio = await get_nps_portfolio_summary()
         sections.append(f"━━━━━━━━━━━━━━━━━━━━\n🏛 *국민연금 포트폴리오 요약*\n{portfolio}")
@@ -36,6 +37,7 @@ async def build_daily_report() -> str:
 
     news = []
     market = []
+    picks = []
 
     try:
         news = await collect_nps_news()
@@ -82,6 +84,14 @@ async def build_daily_report() -> str:
             sections.append(f"━━━━━━━━━━━━━━━━━━━━\n💎 *저평가 관심 종목 (국민연금 보유)*\n{picks_text}")
     except Exception as e:
         logger.error(f"종목 분석 실패: {e}")
+
+    try:
+        logger.info("AI 종목 추천 시작")
+        recommendation = await recommend_stocks(news, market, picks, portfolio)
+        if recommendation:
+            sections.append(f"━━━━━━━━━━━━━━━━━━━━\n🎯 *AI 종목 추천*\n{recommendation}")
+    except Exception as e:
+        logger.error(f"AI 종목 추천 실패: {e}", exc_info=True)
 
     sections.append("\n_본 리포트는 참고용이며 투자 판단의 책임은 본인에게 있습니다._")
     return "\n\n".join(sections)
