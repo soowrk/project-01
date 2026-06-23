@@ -4,11 +4,22 @@ from urllib.parse import quote
 import aiohttp
 from bs4 import BeautifulSoup
 
-SEARCH_QUERIES = [
+NPS_QUERIES = [
     "국민연금 주식투자",
     "국민연금 포트폴리오",
     "국민연금 지분 매수",
     "국민연금 보유 종목",
+]
+
+MARKET_QUERIES = [
+    "코스피 전망",
+    "미국 증시",
+    "금리 인하 주식",
+    "반도체 관련주",
+    "2차전지 관련주",
+    "AI 관련주 전망",
+    "외국인 매수 종목",
+    "기관 매수 종목",
 ]
 
 HEADERS = {
@@ -41,12 +52,12 @@ async def _fetch_naver_news(session: aiohttp.ClientSession, query: str) -> list[
     return articles
 
 
-async def collect_nps_news() -> list[dict]:
+async def _collect(queries: list[str], limit: int) -> list[dict]:
     seen_titles = set()
     results = []
 
     async with aiohttp.ClientSession() as session:
-        tasks = [_fetch_naver_news(session, q) for q in SEARCH_QUERIES]
+        tasks = [_fetch_naver_news(session, q) for q in queries]
         all_articles = await asyncio.gather(*tasks)
 
     for articles in all_articles:
@@ -55,4 +66,12 @@ async def collect_nps_news() -> list[dict]:
                 seen_titles.add(a["title"])
                 results.append(a)
 
-    return results[:10]
+    return results[:limit]
+
+
+async def collect_nps_news() -> list[dict]:
+    return await _collect(NPS_QUERIES, 7)
+
+
+async def collect_market_news() -> list[dict]:
+    return await _collect(MARKET_QUERIES, 10)

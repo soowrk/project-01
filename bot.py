@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from telegram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from news_collector import collect_nps_news
+from news_collector import collect_nps_news, collect_market_news
 from stock_analyzer import find_undervalued_stocks, get_nps_portfolio_summary
 
 load_dotenv()
@@ -42,6 +42,14 @@ async def build_daily_report() -> str:
             sections.append("━━━━━━━━━━━━━━━━━━━━\n📰 *국민연금 투자 뉴스*\n오늘 관련 뉴스가 없습니다.")
     except Exception as e:
         logger.error(f"뉴스 수집 실패: {e}")
+
+    try:
+        market = await collect_market_news()
+        if market:
+            market_text = "\n".join(f"• [{n['title']}]({n['link']})" for n in market[:10])
+            sections.append(f"━━━━━━━━━━━━━━━━━━━━\n📈 *주식 시장 주요 뉴스*\n{market_text}")
+    except Exception as e:
+        logger.error(f"시장 뉴스 수집 실패: {e}")
 
     try:
         picks = await find_undervalued_stocks()
