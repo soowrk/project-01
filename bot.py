@@ -45,11 +45,14 @@ async def build_daily_report() -> str:
 
     try:
         market = await collect_market_news()
+        logger.info(f"시장 뉴스 수집 결과: {len(market)}건")
         if market:
             market_text = "\n".join(f"• [{n['title']}]({n['link']})" for n in market[:10])
             sections.append(f"━━━━━━━━━━━━━━━━━━━━\n📈 *주식 시장 주요 뉴스*\n{market_text}")
+        else:
+            sections.append("━━━━━━━━━━━━━━━━━━━━\n📈 *주식 시장 주요 뉴스*\n오늘 관련 뉴스가 없습니다.")
     except Exception as e:
-        logger.error(f"시장 뉴스 수집 실패: {e}")
+        logger.error(f"시장 뉴스 수집 실패: {e}", exc_info=True)
 
     try:
         picks = await find_undervalued_stocks()
