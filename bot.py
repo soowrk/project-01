@@ -60,11 +60,14 @@ async def build_daily_report() -> str:
 
     if news or market:
         try:
+            logger.info(f"AI 분석 시작 (뉴스 {len(news)}건, 시장 {len(market)}건)")
+            logger.info(f"GEMINI_API_KEY 설정 여부: {'있음' if os.getenv('GEMINI_API_KEY') else '없음'}")
             analysis = await analyze_news(news, market)
+            logger.info(f"AI 분석 결과: {'있음' if analysis else '없음'} ({len(analysis) if analysis else 0}자)")
             if analysis:
                 sections.append(f"━━━━━━━━━━━━━━━━━━━━\n🤖 *AI 뉴스 분석 리포트*\n{analysis}")
         except Exception as e:
-            logger.error(f"AI 분석 실패: {e}")
+            logger.error(f"AI 분석 실패: {e}", exc_info=True)
 
     try:
         picks = await find_undervalued_stocks()
