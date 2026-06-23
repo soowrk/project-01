@@ -69,19 +69,27 @@ async def build_daily_report() -> str:
     return "\n\n".join(sections)
 
 
+async def send_message(bot: Bot, text: str):
+    MAX_LEN = 4096
+    for i in range(0, len(text), MAX_LEN):
+        await bot.send_message(
+            chat_id=CHAT_ID,
+            text=text[i : i + MAX_LEN],
+            parse_mode="Markdown",
+            disable_web_page_preview=True,
+        )
+
+
 async def send_daily_report():
     logger.info("데일리 리포트 생성 시작")
     bot = Bot(token=BOT_TOKEN)
     report = await build_daily_report()
 
-    MAX_LEN = 4096
-    for i in range(0, len(report), MAX_LEN):
-        await bot.send_message(
-            chat_id=CHAT_ID,
-            text=report[i : i + MAX_LEN],
-            parse_mode="Markdown",
-            disable_web_page_preview=True,
-        )
+    parts = report.split("━━━━━━━━━━━━━━━━━━━━")
+    for part in parts:
+        part = part.strip()
+        if part:
+            await send_message(bot, part)
     logger.info("데일리 리포트 전송 완료")
 
 
