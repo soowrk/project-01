@@ -121,7 +121,7 @@ async def send_daily_report():
 
 async def main():
     scheduler = AsyncIOScheduler(timezone="Asia/Seoul")
-    scheduler.add_job(send_daily_report, "cron", hour=8, minute=0)
+    scheduler.add_job(send_daily_report, "cron", hour=10, minute=0)
     scheduler.start()
     logger.info("봇 시작됨 — 매일 오전 8시(KST)에 리포트를 전송합니다.")
 
