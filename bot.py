@@ -87,12 +87,20 @@ async def build_daily_report() -> str:
 async def send_message(bot: Bot, text: str):
     MAX_LEN = 4096
     for i in range(0, len(text), MAX_LEN):
-        await bot.send_message(
-            chat_id=CHAT_ID,
-            text=text[i : i + MAX_LEN],
-            parse_mode="Markdown",
-            disable_web_page_preview=True,
-        )
+        chunk = text[i : i + MAX_LEN]
+        try:
+            await bot.send_message(
+                chat_id=CHAT_ID,
+                text=chunk,
+                parse_mode="Markdown",
+                disable_web_page_preview=True,
+            )
+        except Exception:
+            await bot.send_message(
+                chat_id=CHAT_ID,
+                text=chunk,
+                disable_web_page_preview=True,
+            )
 
 
 async def send_daily_report():
